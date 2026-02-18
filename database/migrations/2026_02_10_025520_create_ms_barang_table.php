@@ -6,24 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateMsBarangTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
+   
     public function up()
     {
         Schema::create('ms_barang', function (Blueprint $table) {
-            $table->id();
+            $table->id('ID_Barang'); 
+            $table->string('kode_barang')->unique(); 
+            $table->string('nama_barang');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::dropIfExists('ms_barang');

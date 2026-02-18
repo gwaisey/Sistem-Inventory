@@ -18,7 +18,7 @@
                 </div>
                 <div class="col-md-4">
                     <button id="btn-cari" class="btn btn-primary btn-sm px-4">Cari</button>
-                    <button id="btn-reset" class="btn btn-outline-secondary btn-sm px-4">Reset</button>
+                    <button id="btn-reset" class="btn btn-outline-secondary btn-sm px-4">Atur Ulang</button>
                 </div>
             </div>
 
@@ -92,7 +92,7 @@ $(document).ready(function() {
                 $('#table-body').html(rows);
             },
             error: function(xhr) {
-                $('#table-body').html('<tr><td colspan="9" class="text-danger">Gagal memuat data. Cek koneksi API.</td></tr>');
+                $('#table-body').html('<tr><td colspan="9" class="text-danger">Gagal memuat data.</td></tr>');
             }
         });
     }
