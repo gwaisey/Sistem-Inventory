@@ -8,15 +8,24 @@
         </div>
         <div class="card-body bg-light">
             <div class="row g-3 align-items-end mb-4">
-                <div class="col-md-3">
+                <div class="row g-3 align-items-end mb-4">
+                <div class="col-md-2">
                     <label class="small fw-bold">Nomor Bukti:</label>
                     <input type="text" id="filter-bukti" class="form-control form-control-sm" placeholder="Cari Bukti...">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="small fw-bold">Tanggal:</label>
                     <input type="date" id="filter-tgl" class="form-control form-control-sm">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-2">
+                    <label class="small fw-bold">Lokasi:</label>
+                    <input type="text" id="filter_lokasi" class="form-control form-control-sm" placeholder="Cari Lokasi...">
+                </div>
+                <div class="col-md-3">
+                    <label class="small fw-bold">Kode Barang:</label>
+                    <input type="text" id="filter_kode" class="form-control form-control-sm" placeholder="Cari Kode...">
+                </div>
+                <div class="col-md-3">
                     <button id="btn-cari" class="btn btn-primary btn-sm px-4">Cari</button>
                     <button id="btn-reset" class="btn btn-outline-secondary btn-sm px-4">Atur Ulang</button>
                 </div>
@@ -58,14 +67,21 @@ $(document).ready(function() {
     loadData();
 
    
-    function loadData(bukti = '', tgl = '') {
-        $('#table-body').html('<tr><td colspan="9">Sedang memuat data...</td></tr>');
-        
-        // Ini memanggil fungsi apiHistory di Controller
+    function loadData() {
+        const bukti = $('#filter-bukti').val(); // Sesuaikan ID dengan HTML
+        const tgl = $('#filter-tgl').val();     // Sesuaikan ID dengan HTML
+        const lokasi = $('#filter_lokasi').val(); 
+        const kode = $('#filter_kode').val();     
+
         $.ajax({
-            url: "/api/report-history",
+            url: "{{ url('api/history') }}",
             type: "GET",
-            data: { bukti: bukti, tgl: tgl },
+            data: { 
+                bukti: bukti, 
+                tgl: tgl,
+                lokasi: lokasi,
+                kode_barang: kode 
+            },
             success: function(response) {
                 let rows = '';
                 if (response.length > 0) {
@@ -101,15 +117,19 @@ $(document).ready(function() {
     // Filter Responsif
     // Memicu loadData() dengan parameter bukti dan tanggal 
     // tanpa mereload seluruh halaman.
+    
+    // Tombol Cari
     $('#btn-cari').on('click', function() {
-        loadData($('#filter-bukti').val(), $('#filter-tgl').val());
+        loadData();
     });
 
+    // Tombol Reset (Sekarang menghapus semua 4 filter)
     $('#btn-reset').on('click', function() {
         $('#filter-bukti').val('');
         $('#filter-tgl').val('');
+        $('#filter_lokasi').val('');
+        $('#filter_kode').val('');
         loadData();
     });
-});
 </script>
 @endsection

@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StokController;
+use App\Http\Controllers\MasterBarangController;
+use App\Http\Controllers\MasterLokasiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,3 +32,6 @@ Route::get('/report-history', [StokController::class, 'reportHistory']);
 
 // Route khusus untuk mengambil data JSON (API) yang dipanggil AJAX
 Route::get('/api/report-history', [StokController::class, 'apiHistory']);
+
+Route::get('/master-barang', [MasterBarangController::class, 'index']);
+Route::get('/master-lokasi', [MasterLokasiController::class, 'index']);

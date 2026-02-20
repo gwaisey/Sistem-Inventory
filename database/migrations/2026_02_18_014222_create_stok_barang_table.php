@@ -9,22 +9,20 @@ class CreateStokBarangTable extends Migration
   
     public function up()
     {
-        // Tipe-tipe data 
         Schema::create('stok_barang', function (Blueprint $table) {
             $table->id('ID_Stok'); 
             
-        
+            // Cukup simpan ID-nya saja
             $table->unsignedBigInteger('id_lokasi'); 
             $table->unsignedBigInteger('id_barang'); 
 
-            $table->string('kode_barang');//->unique();
-            $table->string('kode_lokasi');
-            
             $table->integer('saldo');
             $table->date('tgl_masuk');
-            
-          
             $table->timestamps(); 
+
+            // Tambahkan relasi (Optional tapi sangat disarankan)
+            $table->foreign('id_barang')->references('ID_Barang')->on('ms_barang')->onDelete('cascade');
+            $table->foreign('id_lokasi')->references('ID_Lokasi')->on('ms_lokasi')->onDelete('cascade');
         });
     }
 

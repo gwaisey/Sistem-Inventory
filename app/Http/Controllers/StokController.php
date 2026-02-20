@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use App\Http\Controllers\MasterBarangController;
+use App\Http\Controllers\MasterLokasiController;
 
 class StokController extends Controller
 {
@@ -20,35 +20,15 @@ class StokController extends Controller
         $tglInput = $request->tgl_transaksi;
         $qtyInput = $request->quantity;
 
-        // CEK MASTER BARANG 
-        $barang = DB::table('ms_barang')->where('kode_barang', $request->kode_barang)->first();
-        
-        // Logika Check-or-Insert agar sistem tetap berjalan lancar
-        // meskipun menginput kode barang yang benar-benar baru.
-        if (!$barang) {
-            $idB = DB::table('ms_barang')->insertGetId([
-                'kode_barang' => $request->kode_barang,
-                'nama_barang' => $request->nama_barang ?? $request->kode_barang
-            ]);
-            $barang = DB::table('ms_barang')->where('ID_Barang', $idB)->first();
-        }
-
-        // CEK MASTER LOKASI 
-        $lokasi = DB::table('ms_lokasi')->where('kode_lokasi', $request->kode_lokasi)->first();
-        if (!$lokasi) {
-            $idL = DB::table('ms_lokasi')->insertGetId([
-                'kode_lokasi' => $request->kode_lokasi,
-                'nama_lokasi' => 'Gudang ' . $request->kode_lokasi
-            ]);
-            $lokasi = DB::table('ms_lokasi')->where('ID_Lokasi', $idL)->first();
-        }
+        // Panggil Master Controller
+        $barang = MasterBarangController::cekAtauSimpan($request->kode_barang, $request->nama_barang);
+        $lokasi = MasterLokasiController::cekAtauSimpan($request->kode_lokasi);
 
         if ($jenis == 'MASUK') {
             $idStok = DB::table('stok_barang')->insertGetId([
                 'id_lokasi'   => $lokasi->ID_Lokasi, 
                 'id_barang'   => $barang->ID_Barang, 
-                'kode_lokasi' => $request->kode_lokasi,
-                'kode_barang' => $request->kode_barang,
+                // Kolom kode_lokasi & kode_barang dihapus dari sini karena sudah ada ID
                 'saldo'       => $qtyInput,             
                 'tgl_masuk'   => $tglInput,            
             ]);
@@ -58,8 +38,7 @@ class StokController extends Controller
                 'Bukti'       => $request->bukti,
                 'Tgl'         => $tglInput,
                 'Jam'         => now()->format('H:i:s'),
-                'Kode_Lokasi' => $request->kode_lokasi,
-                'Kode_Barang' => $request->kode_barang,
+                // Kolom Kode_Lokasi & Kode_Barang dihapus dari history
                 'Qty_Trn'     => $qtyInput,
                 'Prog'        => 'MAINTENANCE_STOK',
                 'User'        => 'GRACE', 
@@ -77,8 +56,6 @@ class StokController extends Controller
 
             if ($total < $qtyInput) return back()->with('error', 'Saldo Tidak Cukup!');
 
-            // FIFO -> Pengurutan Batch
-            // Memastikan batch stok tertua diambil dulu dengan ascending
             $stoks = DB::table('stok_barang')
                 ->where('id_barang', $barang->ID_Barang)
                 ->where('id_lokasi', $lokasi->ID_Lokasi)
@@ -91,8 +68,6 @@ class StokController extends Controller
             foreach ($stoks as $stok) {
                 if ($sisaKeluar <= 0) break;
                 
-                // FIFO -> Memotong stok batch secara bertahap
-                // Sampai variabel $sisaKeluar habis
                 $ambil = min($stok->saldo, $sisaKeluar); 
 
                 $dataHistoryKeluar = [
@@ -100,17 +75,12 @@ class StokController extends Controller
                     'Bukti'       => $request->bukti,
                     'Tgl'         => $tglInput,
                     'Jam'         => now()->format('H:i:s'),
-                    'Kode_Lokasi' => $request->kode_lokasi,
-                    'Kode_Barang' => $request->kode_barang,
                     'Qty_Trn'     => -$ambil, 
                     'Prog'        => 'MAINTENANCE_STOK',
                     'User'        => 'GRACE',
                 ];
 
                 DB::table('stok_barang')->where('ID_Stok', $stok->ID_Stok)->decrement('saldo', $ambil); 
-                
-                // FIFO -> Ini alasannya kenapa satu input "Keluar" 
-                // bisa muncul jadi dua baris di tabel Riwayat Transaksi
                 DB::table('transaksi_history')->insert($dataHistoryKeluar); 
 
                 $sisaKeluar -= $ambil;
@@ -120,13 +90,9 @@ class StokController extends Controller
     }
 
     public function reportSaldo(Request $request)
-    {   
+    {
+        // Menggunakan JOIN karena tabel stok_barang sekarang cuma simpan ID
         $query = DB::table('stok_barang as s')
-
-            // Memisah tabel ms_barang dan ms_lokasi
-            // Tabel-tabel ini saling terelasi tanpa menduplikasi nama barang
-            // Relasi Foreign Key: Kolom id_barang dan id_lokasi pada tabel stok_barang.
-            // Ini adalah Foreign Key yang merujuk ke tabel Master.
             ->join('ms_barang as b', 's.id_barang', '=', 'b.ID_Barang')
             ->join('ms_lokasi as l', 's.id_lokasi', '=', 'l.ID_Lokasi')
             ->select(
@@ -134,18 +100,24 @@ class StokController extends Controller
                 'l.kode_lokasi as Kode_Lokasi', 
                 'b.kode_barang as Kode_Barang', 
                 'b.nama_barang as Nama_Barang', 
-                's.saldo as Saldo',         
-                's.tgl_masuk as Tgl_Masuk'   
+                's.saldo as Saldo', 
+                's.tgl_masuk as Tgl_Masuk'
             );
 
-        if ($request->filled('lokasi')) $query->where('l.kode_lokasi', $request->lokasi);
-        if ($request->filled('kode_barang')) $query->where('b.kode_barang', $request->kode_barang);
+        if ($request->filled('lokasi')) {
+            $query->where('l.kode_lokasi', $request->lokasi);
+        }
 
-        $data = $query->orderBy('s.tgl_masuk', 'asc')
-                    ->orderBy('s.ID_Stok', 'asc')
-                    ->get();
-                    
-        return view('report-saldo', compact('data'));
+        if ($request->filled('kode_barang')) {
+            $query->where('b.kode_barang', 'like', '%' . $request->kode_barang . '%');
+        }
+
+        $data = $query->orderBy('s.tgl_masuk', 'asc')->get();
+        
+        $listLokasi = DB::table('ms_lokasi')->get();
+        $listBarang = DB::table('ms_barang')->get();
+
+        return view('report-saldo', compact('data', 'listLokasi', 'listBarang'));
     }
 
     public function reportHistory() 
@@ -156,31 +128,41 @@ class StokController extends Controller
     public function apiHistory(Request $request) 
     {
         $query = DB::table('transaksi_history as h')
+            ->join('stok_barang as s', 'h.ID_Stok', '=', 's.ID_Stok')
+            ->join('ms_barang as b', 's.id_barang', '=', 'b.ID_Barang')
+            ->join('ms_lokasi as l', 's.id_lokasi', '=', 'l.ID_Lokasi')
             ->select(
                 'h.id as id_history', 
                 'h.ID_Stok as id_stok', 
                 'h.Bukti', 
                 DB::raw("DATE_FORMAT(h.Tgl, '%d/%m/%Y') as Tgl"), 
                 'h.Jam', 
-                'h.Kode_Lokasi', 
-                'h.Kode_Barang', 
+                'l.kode_lokasi as Kode_Lokasi', 
+                'b.kode_barang as Kode_Barang', 
                 'h.Qty_Trn', 
                 'h.Prog'
             );
 
+        // Filter yang sudah ada
         if ($request->filled('bukti')) {
             $query->where('h.Bukti', 'like', '%' . $request->bukti . '%');
         }
-        
         if ($request->filled('tgl')) {
             $query->where('h.Tgl', $request->tgl);
         }
 
+        // TAMBAHKAN FILTER BARU INI:
+        if ($request->filled('lokasi')) {
+            $query->where('l.kode_lokasi', $request->lokasi);
+        }
+        if ($request->filled('kode_barang')) {
+            $query->where('b.kode_barang', 'like', '%' . $request->kode_barang . '%');
+        }
+
         $data = $query->orderBy('h.Tgl', 'asc')
-                      ->orderBy('h.Jam', 'asc')
-                      ->get();
+                    ->orderBy('h.Jam', 'asc')
+                    ->get();
         
-        // fungsi apiHistory di Controller diakhiri dengan:
         return response()->json($data); 
     }
 }

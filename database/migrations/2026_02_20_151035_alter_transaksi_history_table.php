@@ -26,7 +26,8 @@ class AlterTransaksiHistoryTable extends Migration
     public function down()
     {
         Schema::table('transaksi_history', function (Blueprint $table) {
-            $table->string(['Kode_Barang','Kode_Lokasi']);
+            $table->string('Kode_Barang');
+            $table->string('Kode_Lokasi');
     });
     }
 }
