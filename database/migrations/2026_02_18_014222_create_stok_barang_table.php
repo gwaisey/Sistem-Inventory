@@ -9,6 +9,7 @@ class CreateStokBarangTable extends Migration
   
     public function up()
     {
+        // Tipe-tipe data 
         Schema::create('stok_barang', function (Blueprint $table) {
             $table->id('ID_Stok'); 
             
@@ -16,7 +17,7 @@ class CreateStokBarangTable extends Migration
             $table->unsignedBigInteger('id_lokasi'); 
             $table->unsignedBigInteger('id_barang'); 
 
-            $table->string('kode_barang');
+            $table->string('kode_barang');//->unique();
             $table->string('kode_lokasi');
             
             $table->integer('saldo');

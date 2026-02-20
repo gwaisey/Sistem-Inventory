@@ -22,6 +22,9 @@ class StokController extends Controller
 
         // CEK MASTER BARANG 
         $barang = DB::table('ms_barang')->where('kode_barang', $request->kode_barang)->first();
+        
+        // Logika Check-or-Insert agar sistem tetap berjalan lancar
+        // meskipun menginput kode barang yang benar-benar baru.
         if (!$barang) {
             $idB = DB::table('ms_barang')->insertGetId([
                 'kode_barang' => $request->kode_barang,
@@ -74,6 +77,8 @@ class StokController extends Controller
 
             if ($total < $qtyInput) return back()->with('error', 'Saldo Tidak Cukup!');
 
+            // FIFO -> Pengurutan Batch
+            // Memastikan batch stok tertua diambil dulu dengan ascending
             $stoks = DB::table('stok_barang')
                 ->where('id_barang', $barang->ID_Barang)
                 ->where('id_lokasi', $lokasi->ID_Lokasi)
@@ -86,6 +91,8 @@ class StokController extends Controller
             foreach ($stoks as $stok) {
                 if ($sisaKeluar <= 0) break;
                 
+                // FIFO -> Memotong stok batch secara bertahap
+                // Sampai variabel $sisaKeluar habis
                 $ambil = min($stok->saldo, $sisaKeluar); 
 
                 $dataHistoryKeluar = [
@@ -101,7 +108,10 @@ class StokController extends Controller
                 ];
 
                 DB::table('stok_barang')->where('ID_Stok', $stok->ID_Stok)->decrement('saldo', $ambil); 
-                DB::table('transaksi_history')->insert($dataHistoryKeluar);
+                
+                // FIFO -> Ini alasannya kenapa satu input "Keluar" 
+                // bisa muncul jadi dua baris di tabel Riwayat Transaksi
+                DB::table('transaksi_history')->insert($dataHistoryKeluar); 
 
                 $sisaKeluar -= $ambil;
             }
@@ -110,8 +120,13 @@ class StokController extends Controller
     }
 
     public function reportSaldo(Request $request)
-    {
+    {   
         $query = DB::table('stok_barang as s')
+
+            // Memisah tabel ms_barang dan ms_lokasi
+            // Tabel-tabel ini saling terelasi tanpa menduplikasi nama barang
+            // Relasi Foreign Key: Kolom id_barang dan id_lokasi pada tabel stok_barang.
+            // Ini adalah Foreign Key yang merujuk ke tabel Master.
             ->join('ms_barang as b', 's.id_barang', '=', 'b.ID_Barang')
             ->join('ms_lokasi as l', 's.id_lokasi', '=', 'l.ID_Lokasi')
             ->select(
@@ -165,6 +180,7 @@ class StokController extends Controller
                       ->orderBy('h.Jam', 'asc')
                       ->get();
         
+        // fungsi apiHistory di Controller diakhiri dengan:
         return response()->json($data); 
     }
 }

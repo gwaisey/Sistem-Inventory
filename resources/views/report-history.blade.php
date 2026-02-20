@@ -22,8 +22,6 @@
                 </div>
             </div>
 
-            
-
             <div class="table-responsive bg-white rounded shadow-sm">
                 <table class="table table-hover table-bordered mb-0" style="min-width: 1000px;">
                     <thead class="table-light text-center small fw-bold">
@@ -63,6 +61,7 @@ $(document).ready(function() {
     function loadData(bukti = '', tgl = '') {
         $('#table-body').html('<tr><td colspan="9">Sedang memuat data...</td></tr>');
         
+        // Ini memanggil fungsi apiHistory di Controller
         $.ajax({
             url: "/api/report-history",
             type: "GET",
@@ -70,6 +69,8 @@ $(document).ready(function() {
             success: function(response) {
                 let rows = '';
                 if (response.length > 0) {
+                    
+                    // Mengubah data JSON tersebut menjadi baris HTML (rows += ...)
                     $.each(response, function(i, item) {
                   
                         let qtyColor = item.Qty_Trn < 0 ? 'text-danger' : 'text-success';
@@ -97,7 +98,9 @@ $(document).ready(function() {
         });
     }
 
-
+    // Filter Responsif
+    // Memicu loadData() dengan parameter bukti dan tanggal 
+    // tanpa mereload seluruh halaman.
     $('#btn-cari').on('click', function() {
         loadData($('#filter-bukti').val(), $('#filter-tgl').val());
     });
