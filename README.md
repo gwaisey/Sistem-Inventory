@@ -1,64 +1,53 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# FIFO Inventory Management System
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A web-based inventory application built with **Laravel** to manage stock movement using the **First-In, First-Out (FIFO)** method. This system ensures that the oldest stock batches are depleted first during outgoing transactions to maintain chronological inventory accuracy and proper stock valuation.
 
-## About Laravel
+## 🚀 Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+* **Stock Maintenance**: A centralized interface to record "In" (Masuk) and "Out" (Keluar) transactions.
+* **FIFO Engine**: Automatically identifies and deducts from the earliest available stock batches.
+* **Real-time Logging**: Every transaction is recorded with a timestamp, quantity, program source, and user ID.
+* **Normalized Data**: Uses a structured database approach to manage Items and Locations independently, preventing data redundancy.
+* **Advanced Reporting**:
+    * **Stock Balance Report**: View current inventory levels filtered by Location and Item Code.
+    * **Transaction History**: A full audit trail with filtering by Proof Number, Date, Location, and Item Code.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📋 Business Rules & Validations
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Based on the project specifications:
+* **FIFO Logic**: When reducing stock, the system consumes the full balance of the oldest batch (based on entry date) before moving to the next available batch.
+* **Date Constraint**: Incoming and outgoing transactions are rejected if the transaction date is earlier than the last recorded entry for that specific item and location.
+* **Balance Check**: "Out" transactions are rejected if the requested quantity exceeds the total available balance in the selected location.
 
-## Learning Laravel
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Tech Stack
 
-## Laravel Sponsors
+* **Framework**: Laravel 11
+* **Database**: MySQL
+* **Frontend**: Bootstrap 5 & Blade Templating
+* **Scripting**: jQuery & AJAX (for dynamic reporting)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## ⚙️ Installation
 
-### Premium Partners
+1.  **Clone the repository**:
+    ```bash
+    git clone [https://github.com/gwaisey/Sistem-Inventory.git](https://github.com/gwaisey/Sistem-Inventory.git)
+    cd Sistem-Inventory
+    ```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+2.  **Setup Environment**:
+    * Copy `.env.example` to `.env`
+    * Update your database credentials (DB_DATABASE, DB_USERNAME, DB_PASSWORD) in `.env`
+    * Run `php artisan key:generate`
 
-## Contributing
+3.  **Install & Migrate**:
+    ```bash
+    composer install
+    php artisan migrate
+    ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+4.  **Run Application**:
+    ```bash
+    php artisan serve
+    ```
